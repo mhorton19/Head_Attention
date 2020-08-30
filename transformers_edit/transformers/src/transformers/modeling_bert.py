@@ -281,8 +281,8 @@ class BertSelfAttention(nn.Module):
 
         # Normalize the attention scores to probabilities.
         attention_probs = nn.Softmax(dim=-1)(attention_scores)
-        '''
-        if self.use_elementwise:
+
+        '''if self.use_elementwise:
             print('PERCENTAGE_OF_GLOBAL_VECS: %0.9f' % (self.num_elementwise/attention_probs.shape[2]))
             print('PERCENT_USAGE_OF_GLOBAL_VECS: %0.9f' % (attention_probs[:,:,:-self.num_elementwise,-self.num_elementwise:].mean() * self.num_elementwise))'''
 
@@ -782,6 +782,7 @@ class BertModel(BertPreTrainedModel):
         output_attentions=None,
         output_hidden_states=None,
         return_dict=None,
+        padding_token=1
     ):
         r"""
         encoder_hidden_states  (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`, `optional`, defaults to :obj:`None`):
@@ -811,7 +812,8 @@ class BertModel(BertPreTrainedModel):
         device = input_ids.device if input_ids is not None else inputs_embeds.device
 
         if attention_mask is None:
-            attention_mask = torch.ones(input_shape, device=device)
+            #attention_mask = torch.ones(input_shape, device=device)
+            attention_mask = torch.ones(input_shape, device=device) * (input_ids != padding_token)
         if token_type_ids is None:
             token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
 
