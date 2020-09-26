@@ -11,16 +11,16 @@ from transformers.GlobalLayers.ElementwiseAttention import GlobalElementwiseAtte
 class AppendElementwiseAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.elementwise_attention = GlobalElementwiseAttention(config.hidden_size, config.hidden_size, config.num_elementwise, use_bn=True)
+        self.elementwise_attention = GlobalElementwiseAttention(config.hidden_size, config.hidden_size, config.num_elementwise, use_bn=False)
 
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        #self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
     def forward(self, hidden_states, attention_mask):
         attention_outputs = self.elementwise_attention(hidden_states, attention_mask=attention_mask)
-        dense_outputs = self.dense(attention_outputs)
+        #dense_outputs = self.dense(attention_outputs)
 
-        norm_outputs = self.LayerNorm(dense_outputs)
+        norm_outputs = self.LayerNorm(attention_outputs)
 
         cat_output = torch.cat((hidden_states, norm_outputs), axis=1)
         return cat_output

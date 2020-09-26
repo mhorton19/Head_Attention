@@ -282,12 +282,15 @@ class BertSelfAttention(nn.Module):
         # Normalize the attention scores to probabilities.
         attention_probs = nn.Softmax(dim=-1)(attention_scores)
 
-        '''if self.use_elementwise:
-            print('PERCENTAGE_OF_GLOBAL_VECS: %0.9f' % (self.num_elementwise/attention_probs.shape[2]))
+
+        '''percent_not_masked = (attention_mask == 0).type(torch.DoubleTensor).mean()
+        if self.use_elementwise:
+            print('PERCENTAGE_OF_GLOBAL_VECS: %0.9f' % (self.num_elementwise/(attention_probs.shape[2]*percent_not_masked)))
             print('PERCENT_USAGE_OF_GLOBAL_VECS: %0.9f' % (attention_probs[:,:,:-self.num_elementwise,-self.num_elementwise:].mean() * self.num_elementwise))'''
 
         # This is actually dropping out entire tokens to attend to, which might
         # seem a bit unusual, but is taken from the original Transformer paper.
+        scaled_probs = attention_probs / attention_probs.mean(dim=-1, keepdim=True)
         attention_probs = self.dropout(attention_probs)
 
         # Mask heads if we want to

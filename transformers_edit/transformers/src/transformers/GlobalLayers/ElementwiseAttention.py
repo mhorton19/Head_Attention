@@ -7,13 +7,13 @@ sys.path.insert(0, '../../')
 from transformers.GlobalLayers.masked_softmax import masked_softmax
 from batchrenorm import BatchRenorm1d
 class GlobalElementwiseAttention(nn.Module):
-    def __init__(self, input_size, output_size, num_vectors, use_bn=True):
+    def __init__(self, input_size, output_size, num_vectors, use_bn=False):
         super(GlobalElementwiseAttention, self).__init__()
 
         self.output_size = output_size
         self.num_vectors = num_vectors
 
-        self.predict_global = nn.Linear(input_size, output_size * num_vectors, bias=False)
+        #self.predict_global = nn.Linear(input_size, output_size * num_vectors, bias=False)
         self.predict_weight = nn.Linear(input_size, output_size * num_vectors, bias=False)
 
         self.use_bn = use_bn
@@ -22,7 +22,8 @@ class GlobalElementwiseAttention(nn.Module):
 
     def forward(self, x, attention_mask=None, reshape_output=True):
         #DIVIDE BY SQRT(len) TO STABALIZE? Or is that just for dot prod?
-        global_vecs = self.predict_global(x).permute(0, 2, 1)
+        #global_vecs = self.predict_global(x).permute(0, 2, 1)
+        global_vecs = x.repeat(1,1,self.num_vectors).permute(0, 2, 1)
 
         weight = self.predict_weight(x).permute(0, 2, 1)
 
@@ -34,11 +35,11 @@ class GlobalElementwiseAttention(nn.Module):
         global_vec = torch.matmul(global_vecs.unsqueeze(-2), weight_vec.unsqueeze(-1)).squeeze(-1).squeeze(-1)
 
         if self.use_bn:
-            global_norm_vec = self.bn(global_vec)
+            global_vec = self.bn(global_vec)
 
         if reshape_output:
-            out_vec = global_norm_vec.view(global_norm_vec.shape[0], self.num_vectors, self.output_size)
+            out_vec = global_vec.view(global_vec.shape[0], self.num_vectors, self.output_size)
         else:
-            out_vec = global_norm_vec
+            out_vec = global_vec
 
         return out_vec
