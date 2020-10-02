@@ -14,12 +14,12 @@ tokenizer._tokenizer.post_processor = BertProcessing(
 )
 tokenizer.enable_truncation(max_length=512)
 
-from transformers.GlobalLayers.configuration_elementwise_roberta import ElementwiseRobertaConfig
+from transformers_weighted_head.src.transformers import RobertaConfig
 
-ELEMENTWISE = True
+WEIGHT_HEADS = True
 
-config = ElementwiseRobertaConfig(
-    use_elementwise=ELEMENTWISE,
+config = RobertaConfig(
+    weight_heads=WEIGHT_HEADS,
     vocab_size=52_000,
     max_position_embeddings=514,
     hidden_size=480,
@@ -28,17 +28,17 @@ config = ElementwiseRobertaConfig(
     type_vocab_size=1,
 )
 
-from transformers import RobertaTokenizerFast
+from transformers_weighted_head.src.transformers import RobertaTokenizerFast
 
 tokenizer = RobertaTokenizerFast.from_pretrained("./EsperBERTo", max_len=512)
 
-from transformers.modeling_roberta import RobertaForMaskedLM
+from transformers_weighted_head.src.transformers.modeling_roberta import RobertaForMaskedLM
 
 model = RobertaForMaskedLM(config=config)
 
 print(model.num_parameters())
 
-from transformers import LineByLineTextDataset
+from transformers_weighted_head.src.transformers import LineByLineTextDataset
 
 dataset = LineByLineTextDataset(
     tokenizer=tokenizer,
@@ -46,21 +46,22 @@ dataset = LineByLineTextDataset(
     block_size=128,
 )
 
-from transformers import DataCollatorForLanguageModeling
+from transformers_weighted_head.src.transformers import DataCollatorForLanguageModeling
 
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer, mlm=True, mlm_probability=0.15
 )
 
-from transformers import Trainer, TrainingArguments
+from transformers_weighted_head.src.transformers import Trainer, TrainingArguments
 
 
 training_args = TrainingArguments(
-    output_dir='./EsperBERTo' + ('_elementwise' if ELEMENTWISE else '_standard'),
+    output_dir='./EsperBERTo' + ('_weighted_heads' if WEIGHT_HEADS else '_standard_heads'),
     overwrite_output_dir=True,
-    num_train_epochs=1,
+    num_train_epochs=20,
     per_gpu_train_batch_size=8,
     save_steps=10_000,
+    logging_steps=10_000,
     save_total_limit=2,
 )
 
