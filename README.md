@@ -1,2 +1,2 @@
-# Global_Self_Attention
-My experiments using global self-attention layer to augment/replace transformer architectures in NLP tasks
+# Head_Attention
+My experiments using an attention mechanism to apply softmax attention to head selection from multihead attention.
